@@ -33,6 +33,7 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 
 private const val PAD = 14f
+private const val PAD_SHORT = 8f
 
 class SmokeWidget : GlanceAppWidget() {
     // Recompose with the real size so the grid shows as many weeks as fit.
@@ -57,11 +58,16 @@ private fun WidgetContent(context: Context) {
         Configuration.UI_MODE_NIGHT_YES
     val palette = if (night) GridPalette.DARK else GridPalette.LIGHT
 
-    // Geometry in dp: cell from the height (clamped 10..20), gap a quarter of the cell.
-    val innerW = size.width.value - PAD * 2
-    val innerH = size.height.value - PAD * 2
-    val cell = floor(innerH / 8.5f).coerceIn(10f, 20f)
-    val gap = (cell / 4f).roundToInt().toFloat()
+    // Geometry in dp: cell from the height (half-dp steps, up to 20), gap a quarter of the cell.
+    // One-row-tall widgets (2x1) get tighter padding and smaller squares so all 7 days fit.
+    val pad = if (size.height.value < 100f) PAD_SHORT else PAD
+    val innerW = size.width.value - pad * 2
+    val innerH = size.height.value - pad * 2
+    // Pick the gap first, then fit 7 cells into what's left so the grid never overflows.
+    val roughGap = (innerH / 8.5f / 4f).roundToInt().coerceAtLeast(1)
+    val cell = (floor((innerH - 6 * roughGap) / 7f * 2f) / 2f).coerceIn(3f, 20f)
+    val gap = (cell / 4f).roundToInt().coerceAtLeast(1).toFloat()
+    val ring = (cell * 0.1f).coerceIn(1f, 1.5f)
     val weeks = floor((innerW + gap) / (cell + gap)).toInt().coerceAtLeast(1)
     val gridW = weeks * (cell + gap) - gap
     val gridH = 7 * (cell + gap) - gap
@@ -70,7 +76,7 @@ private fun WidgetContent(context: Context) {
     val grid = remember(version, today, weeks, cell, palette) {
         HeatmapRenderer.render(
             SmokeLog.allCounts(context), today, SmokeLog.startDate(context),
-            weeks, cell * density, gap * density, 1.5f * density, palette,
+            weeks, cell * density, gap * density, ring * density, palette,
         )
     }
     val streak = remember(version, today) { SmokeLog.cleanStreak(context) }
@@ -85,7 +91,7 @@ private fun WidgetContent(context: Context) {
             .fillMaxSize()
             .background(ColorProvider(Color(palette.background)))
             .then(corners)
-            .padding(PAD.dp)
+            .padding(pad.dp)
             .clickable(actionStartActivity<MainActivity>()),
         contentAlignment = Alignment.CenterEnd,
     ) {
