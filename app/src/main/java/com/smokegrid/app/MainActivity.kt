@@ -53,6 +53,8 @@ import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -81,9 +83,17 @@ private val DayLabelWidth = 16.dp
 private val DayLabelGap = 6.dp
 private const val MAX_WEEKS = 13
 
-private val Caption = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextSecondary)
-private val Small = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Medium, lineHeight = 14.sp, color = TextSecondary)
-private val Label = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, fontFeatureSettings = "tnum")
+/** Manrope variable font; each weight sets its wght axis. */
+private val Manrope = FontFamily(
+    Font(R.font.manrope, FontWeight.Normal),
+    Font(R.font.manrope, FontWeight.Medium),
+    Font(R.font.manrope, FontWeight.SemiBold),
+    Font(R.font.manrope, FontWeight.Bold),
+)
+
+private val Caption = TextStyle(fontFamily = Manrope, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextSecondary)
+private val Small = TextStyle(fontFamily = Manrope, fontSize = 11.sp, fontWeight = FontWeight.Medium, lineHeight = 14.sp, color = TextSecondary)
+private val Label = TextStyle(fontFamily = Manrope, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, fontFeatureSettings = "tnum")
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -135,20 +145,20 @@ private fun HomeScreen() {
                     Text(
                         text = "$streak",
                         color = TextPrimary,
-                        style = TextStyle(fontSize = 72.sp, fontWeight = FontWeight.SemiBold, lineHeight = 72.sp, letterSpacing = (-0.03).em),
+                        style = TextStyle(fontFamily = Manrope, fontSize = 72.sp, fontWeight = FontWeight.SemiBold, lineHeight = 72.sp, letterSpacing = (-0.03).em),
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = "${daysWord(streak)} clean",
                         color = TextPrimary,
-                        style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Medium),
+                        style = TextStyle(fontFamily = Manrope, fontSize = 20.sp, fontWeight = FontWeight.Medium),
                     )
                 }
             } else {
                 Text(
                     text = "Smoked today",
                     color = TextPrimary,
-                    style = TextStyle(fontSize = 36.sp, fontWeight = FontWeight.SemiBold, lineHeight = 40.sp, letterSpacing = (-0.02).em),
+                    style = TextStyle(fontFamily = Manrope, fontSize = 36.sp, fontWeight = FontWeight.SemiBold, lineHeight = 40.sp, letterSpacing = (-0.02).em),
                 )
             }
         }
