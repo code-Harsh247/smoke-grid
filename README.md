@@ -1,6 +1,6 @@
 # Smoke Grid
 
-A home-screen widget that shows a GitHub-style grid of your days. Red box = a day you smoked. The goal is an empty grid.
+A home-screen widget that shows a GitHub-style grid of your days. Ember-shaded box = a day you smoked (darker for 1, brightest for 4+). The goal is an empty grid.
 
 ## Install on your phone
 1. Install **Android Studio** on your laptop and open this `smoke-grid` folder.
@@ -16,18 +16,18 @@ A home-screen widget that shows a GitHub-style grid of your days. Red box = a da
 4. On your phone, open the APK and allow "Install unknown apps" when asked.
 
 ## Using it
-- The widget is just the grid. Tap it to open the app, then press **I smoked today** (or fix any of the last 60 days).
+- The widget is just the grid. Tap it to open the app, then press **I smoked today**. After the first tap the button becomes a − / + stepper for how many you had.
 - The day changes at **4am**, so a late-night cigarette counts for the day before.
-- Today's box has an outline. Dimmed boxes are from before you started tracking.
+- Today's box has a cream ring. Dimmed boxes are from before you started tracking.
+- The widget follows the phone's light / dark mode.
 
 ## How it's built
 | File | What it does |
 |---|---|
-| `SmokeLog.kt` | Stores a count per day on the phone (SharedPreferences). v1 uses 0/1. |
-| `HeatmapRenderer.kt` | Draws the grid as a bitmap, fitting as many weeks as the widget's width allows. |
+| `SmokeLog.kt` | Stores a count per day on the phone (SharedPreferences). |
+| `HeatmapRenderer.kt` | Draws the grid as a bitmap in the Ember palettes (dark + light). |
 | `SmokeWidget.kt` | The widget (Jetpack Glance): just the grid; tapping opens the app. |
-| `MainActivity.kt` | The app screen: big grid, today's button, past-day switches. |
+| `MainActivity.kt` | The app screen: streak, 13-week grid, today's button / stepper. |
 
 ## Ideas for v2
-- Count cigarettes per day (storage already supports counts; the grid already shades by count).
 - Money saved, best streak, worst day of the week.

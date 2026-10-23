@@ -58,8 +58,9 @@ object SmokeLog {
         editor.apply()
     }
 
-    fun toggle(context: Context, date: LocalDate) =
-        setCount(context, date, if (count(context, date) > 0) 0 else 1)
+    /** Adds [delta] cigarettes to [date]; never goes below 0. */
+    fun adjust(context: Context, date: LocalDate, delta: Int) =
+        setCount(context, date, count(context, date) + delta)
 
     fun allCounts(context: Context): Map<LocalDate, Int> =
         prefs(context).all.mapNotNull { (key, value) ->
@@ -68,14 +69,13 @@ object SmokeLog {
             } else null
         }.toMap()
 
-    /** Days since the last smoking day. 0 if you smoked today. */
-    fun cleanStreak(context: Context): Long {
-        val today = today()
+    /** Clean days in a row ending on [through], that day included. 0 if you smoked that day. */
+    fun cleanStreak(context: Context, through: LocalDate = today()): Long {
         val lastSmoked = allCounts(context)
-            .filter { (date, count) -> count > 0 && !date.isAfter(today) }
+            .filter { (date, count) -> count > 0 && !date.isAfter(through) }
             .keys.maxOrNull()
         val from = lastSmoked ?: startDate(context).minusDays(1)
-        return ChronoUnit.DAYS.between(from, today)
+        return ChronoUnit.DAYS.between(from, through).coerceAtLeast(0)
     }
 
     /** Emits whenever the log changes, so the widget and app redraw immediately. */
