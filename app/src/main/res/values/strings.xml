@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Smoke Grid</string>
+    <string name="widget_name">Smoke Grid</string>
+    <string name="widget_description">Tap to log a smoking day. Aim for an empty grid.</string>
+</resources>
