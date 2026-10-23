@@ -15,7 +15,10 @@ import java.time.temporal.ChronoUnit
  */
 object SmokeLog {
     private const val PREFS = "smoke_log"
-    private const val KEY_START = "start_date"
+    /** The day the app was first opened. Never changes once set. */
+    private const val KEY_FIRST_DAY = "first_day"
+    /** Old key that edits used to move (the bug). Dropped on first run of this version. */
+    private const val LEGACY_KEY_START = "start_date"
     private const val DAY_PREFIX = "d_"
 
     /** A cigarette at 1:30am still counts for the previous day. */
@@ -26,23 +29,32 @@ object SmokeLog {
 
     fun today(): LocalDate = LocalDateTime.now().minusHours(DAY_START_HOUR).toLocalDate()
 
-    /** First day of tracking; days before it are drawn dimmed. */
-    fun startDate(context: Context): LocalDate {
+    private fun firstDay(context: Context): LocalDate {
         val p = prefs(context)
-        p.getString(KEY_START, null)?.let { return LocalDate.parse(it) }
+        p.getString(KEY_FIRST_DAY, null)?.let { return LocalDate.parse(it) }
         val t = today()
-        p.edit().putString(KEY_START, t.toString()).apply()
+        p.edit().putString(KEY_FIRST_DAY, t.toString()).remove(LEGACY_KEY_START).apply()
         return t
+    }
+
+    /**
+     * Start of tracking; days before it are drawn dimmed.
+     * Worked out fresh each time (first day, or an earlier logged day if there is one),
+     * so un-marking a past day puts the start back where it was.
+     */
+    fun startDate(context: Context): LocalDate {
+        val first = firstDay(context)
+        val earliestLogged = allCounts(context).filterValues { it > 0 }.keys.minOrNull()
+        return if (earliestLogged != null && earliestLogged.isBefore(first)) earliestLogged else first
     }
 
     fun count(context: Context, date: LocalDate): Int =
         prefs(context).getInt(DAY_PREFIX + date, 0)
 
     fun setCount(context: Context, date: LocalDate, count: Int) {
-        val start = startDate(context)
+        firstDay(context) // make sure the first day is recorded before any edit
         val editor = prefs(context).edit()
         if (count <= 0) editor.remove(DAY_PREFIX + date) else editor.putInt(DAY_PREFIX + date, count)
-        if (date.isBefore(start)) editor.putString(KEY_START, date.toString())
         editor.apply()
     }
 
