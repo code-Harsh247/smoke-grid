@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 3x3 mini grid: mostly empty boxes, two red ones -->
+<!-- Ember 3x3 mini grid: smoked days fading out to a clean today (cream ring) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#2D333B" android:pathData="M29,29h14v14h-14z" />
-    <path android:fillColor="#E5534B" android:pathData="M47,29h14v14h-14z" />
-    <path android:fillColor="#2D333B" android:pathData="M65,29h14v14h-14z" />
-    <path android:fillColor="#2D333B" android:pathData="M29,47h14v14h-14z" />
-    <path android:fillColor="#2D333B" android:pathData="M47,47h14v14h-14z" />
-    <path android:fillColor="#E5534B" android:pathData="M65,47h14v14h-14z" />
-    <path android:fillColor="#2D333B" android:pathData="M29,65h14v14h-14z" />
-    <path android:fillColor="#2D333B" android:pathData="M47,65h14v14h-14z" />
-    <path android:fillColor="#2D333B" android:pathData="M65,65h14v14h-14z" />
+    <path android:fillColor="#CC7430" android:pathData="M32.5,29h7.0a3.5,3.5 0,0 1,3.5,3.5v7.0a3.5,3.5 0,0 1,-3.5,3.5h-7.0a3.5,3.5 0,0 1,-3.5,-3.5v-7.0a3.5,3.5 0,0 1,3.5,-3.5z" />
+    <path android:fillColor="#93562A" android:pathData="M50.5,29h7.0a3.5,3.5 0,0 1,3.5,3.5v7.0a3.5,3.5 0,0 1,-3.5,3.5h-7.0a3.5,3.5 0,0 1,-3.5,-3.5v-7.0a3.5,3.5 0,0 1,3.5,-3.5z" />
+    <path android:fillColor="#2C2722" android:pathData="M68.5,29h7.0a3.5,3.5 0,0 1,3.5,3.5v7.0a3.5,3.5 0,0 1,-3.5,3.5h-7.0a3.5,3.5 0,0 1,-3.5,-3.5v-7.0a3.5,3.5 0,0 1,3.5,-3.5z" />
+    <path android:fillColor="#5E3B22" android:pathData="M32.5,47h7.0a3.5,3.5 0,0 1,3.5,3.5v7.0a3.5,3.5 0,0 1,-3.5,3.5h-7.0a3.5,3.5 0,0 1,-3.5,-3.5v-7.0a3.5,3.5 0,0 1,3.5,-3.5z" />
+    <path android:fillColor="#2C2722" android:pathData="M50.5,47h7.0a3.5,3.5 0,0 1,3.5,3.5v7.0a3.5,3.5 0,0 1,-3.5,3.5h-7.0a3.5,3.5 0,0 1,-3.5,-3.5v-7.0a3.5,3.5 0,0 1,3.5,-3.5z" />
+    <path android:fillColor="#2C2722" android:pathData="M68.5,47h7.0a3.5,3.5 0,0 1,3.5,3.5v7.0a3.5,3.5 0,0 1,-3.5,3.5h-7.0a3.5,3.5 0,0 1,-3.5,-3.5v-7.0a3.5,3.5 0,0 1,3.5,-3.5z" />
+    <path android:fillColor="#2C2722" android:pathData="M32.5,65h7.0a3.5,3.5 0,0 1,3.5,3.5v7.0a3.5,3.5 0,0 1,-3.5,3.5h-7.0a3.5,3.5 0,0 1,-3.5,-3.5v-7.0a3.5,3.5 0,0 1,3.5,-3.5z" />
+    <path android:fillColor="#2C2722" android:pathData="M50.5,65h7.0a3.5,3.5 0,0 1,3.5,3.5v7.0a3.5,3.5 0,0 1,-3.5,3.5h-7.0a3.5,3.5 0,0 1,-3.5,-3.5v-7.0a3.5,3.5 0,0 1,3.5,-3.5z" />
+    <path android:fillColor="#2C2722" android:pathData="M68.5,65h7.0a3.5,3.5 0,0 1,3.5,3.5v7.0a3.5,3.5 0,0 1,-3.5,3.5h-7.0a3.5,3.5 0,0 1,-3.5,-3.5v-7.0a3.5,3.5 0,0 1,3.5,-3.5z" />
+    <path android:strokeColor="#F3E6D3" android:strokeWidth="1.5" android:pathData="M68.5,65.75h7.0a2.75,2.75 0,0 1,2.75,2.75v7.0a2.75,2.75 0,0 1,-2.75,2.75h-7.0a2.75,2.75 0,0 1,-2.75,-2.75v-7.0a2.75,2.75 0,0 1,2.75,-2.75z" />
 </vector>
