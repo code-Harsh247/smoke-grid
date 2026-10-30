@@ -97,8 +97,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        // Pick up other phones' changes whenever the app comes to the front.
-        Sync.schedulePeriodic(this)
+        // Pick up other phones' changes whenever the app comes to the front (no timed background sync).
+        Sync.cancelBackgroundSync(this)
         Sync.requestSync(this, delaySeconds = 0)
     }
 }

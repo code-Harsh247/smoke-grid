@@ -7,11 +7,9 @@ import androidx.glance.appwidget.updateAll
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +31,8 @@ data class SyncDay(val date: String, val count: Int, val updatedAt: Long)
 /**
  * Keeps the log in sync with the Cloudflare Worker in /worker.
  * Signing in stores only a token (never the password). Changed days are sent by a WorkManager job
- * as soon as there's a connection; other phones' changes are pulled on app open and every few hours.
+ * as soon as there's a connection; other phones' changes are pulled when the app is opened.
+ * Nothing runs on a timer in the background.
  */
 object Sync {
     private const val PREFS = "sync"
@@ -45,6 +44,7 @@ object Sync {
     private const val KEY_ERROR = "error"
 
     private const val WORK_NOW = "sync-now"
+    /** The 3-hourly background sync older builds scheduled; cancelled on app start. */
     private const val WORK_PERIODIC = "sync-periodic"
 
     val isConfigured: Boolean get() = BuildConfig.SYNC_URL.isNotBlank()
@@ -81,7 +81,6 @@ object Sync {
             .putLong(KEY_CURSOR, -1)
             .remove(KEY_ERROR)
             .commit()
-        schedulePeriodic(context)
         requestSync(context, delaySeconds = 0)
         null
     }
@@ -108,11 +107,9 @@ object Sync {
         WorkManager.getInstance(context).enqueueUniqueWork(WORK_NOW, ExistingWorkPolicy.REPLACE, request)
     }
 
-    /** Pulls other phones' changes every few hours, even when the app isn't opened. */
-    fun schedulePeriodic(context: Context) {
-        if (!isConfigured || !isSignedIn(context)) return
-        val request = PeriodicWorkRequestBuilder<SyncWorker>(3, TimeUnit.HOURS).setConstraints(online).build()
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK_PERIODIC, ExistingPeriodicWorkPolicy.KEEP, request)
+    /** Removes the periodic background sync that earlier builds scheduled. */
+    fun cancelBackgroundSync(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(WORK_PERIODIC)
     }
 
     private val online = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()

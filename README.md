@@ -32,7 +32,7 @@ One-time setup, from the `worker` folder:
 5. `npm run hash-password`, type a password (10+ characters), then `npx wrangler secret put PASSWORD_HASH` and paste the line it printed.
 6. `npm run deploy`, then put the printed `https://smoke-grid-sync.<you>.workers.dev` URL in `gradle.properties` as `syncUrl=` and rebuild the app.
 
-In the app, tap the cloud icon (top right) and sign in. Each phone stays signed in until you sign out. Changes are sent as soon as there's a connection; other phones' changes arrive when you open the app and every few hours. If the same day was changed on two phones, the later change wins.
+In the app, tap the cloud icon (top right) and sign in. Each phone stays signed in until you sign out. Changes are sent as soon as there's a connection; other phones' changes arrive when you open the app (nothing syncs on a timer in the background). If the same day was changed on two phones, the later change wins.
 
 ## How it's built
 | File | What it does |
