@@ -5,8 +5,7 @@ compatibility_date = "2026-10-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "smoke-grid"
-# Filled in from `npx wrangler d1 create smoke-grid`.
-database_id = "REPLACE_WITH_DATABASE_ID"
+database_id = "9045d7cd-3a6d-45c7-b375-307f16b52945"
 
 # Secrets (set with `npx wrangler secret put <NAME>`, never committed):
 #   ACCOUNT_EMAIL  the email you sign in with
