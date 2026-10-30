@@ -3,6 +3,7 @@ package com.smokegrid.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
@@ -38,23 +39,19 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -69,31 +66,11 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 
-// Ember palette (dark). Grid colours live in GridPalette.
-private val Ground = Color(0xFF1A1714)
-private val TextPrimary = Color(0xFFF3E6D3)
-private val TextSecondary = Color(0xFFA89A88)
-private val ButtonFill = Color(0xFF2A231E)
-private val ButtonBorder = Color(0xFF3A3029)
-private val Accent = Color(0xFFF59A52)
-
 private val Cell = 20.dp
 private val CellGap = 5.dp
 private val DayLabelWidth = 16.dp
 private val DayLabelGap = 6.dp
 private const val MAX_WEEKS = 13
-
-/** Manrope variable font; each weight sets its wght axis. */
-private val Manrope = FontFamily(
-    Font(R.font.manrope, FontWeight.Normal),
-    Font(R.font.manrope, FontWeight.Medium),
-    Font(R.font.manrope, FontWeight.SemiBold),
-    Font(R.font.manrope, FontWeight.Bold),
-)
-
-private val Caption = TextStyle(fontFamily = Manrope, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextSecondary)
-private val Small = TextStyle(fontFamily = Manrope, fontSize = 11.sp, fontWeight = FontWeight.Medium, lineHeight = 14.sp, color = TextSecondary)
-private val Label = TextStyle(fontFamily = Manrope, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, fontFeatureSettings = "tnum")
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -104,14 +81,18 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(background = Ground, surface = Ground)) {
-                Surface(Modifier.fillMaxSize()) { HomeScreen() }
+                Surface(Modifier.fillMaxSize()) {
+                    var showStats by rememberSaveable { mutableStateOf(false) }
+                    BackHandler(enabled = showStats) { showStats = false }
+                    if (showStats) StatsScreen(onBack = { showStats = false }) else HomeScreen(onOpenStats = { showStats = true })
+                }
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen() {
+private fun HomeScreen(onOpenStats: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val version by remember { SmokeLog.changes(context) }.collectAsState(initial = 0)
@@ -164,8 +145,15 @@ private fun HomeScreen() {
         }
         Spacer(Modifier.height(12.dp))
         Text(caption, style = Caption, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(56.dp))
+        Spacer(Modifier.height(40.dp))
         HistoryGrid(counts, today, start)
+        Spacer(Modifier.height(32.dp))
+        SummaryCard(
+            weekTotal = remember(version, today) { Stats.thisWeek(counts, start, today).total },
+            monthTotal = remember(version, today) { Stats.thisMonth(counts, start, today).total },
+            monthName = today.month.getDisplayName(java.time.format.TextStyle.FULL, Locale.getDefault()),
+            onClick = onOpenStats,
+        )
         Spacer(Modifier.weight(1f))
         LogControl(count) { delta ->
             SmokeLog.adjust(context, today, delta)
@@ -178,7 +166,7 @@ private fun HomeScreen() {
     }
 }
 
-/** Month labels, M/W/F day labels, up to 13 weeks of grid and the shade legend. */
+/** Month labels, M/W/F day labels and up to 13 weeks of grid. */
 @Composable
 private fun HistoryGrid(counts: Map<LocalDate, Int>, today: LocalDate, start: LocalDate) {
     BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
@@ -221,29 +209,42 @@ private fun HistoryGrid(counts: Map<LocalDate, Int>, today: LocalDate, start: Lo
                     modifier = Modifier.size(gridW, gridH),
                 )
             }
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("Clean", Modifier.padding(end = 2.dp), style = Small)
-                Swatch(Color(GridPalette.DARK.clean), 11)
-                Text("1", Modifier.padding(start = 12.dp, end = 2.dp), style = Small)
-                GridPalette.DARK.shades.forEach { Swatch(Color(it), 11) }
-                Text("4+", Modifier.padding(start = 2.dp), style = Small)
+        }
+    }
+}
+
+/** This week · this month, tapping opens Stats. Same width as the grid. */
+@Composable
+private fun SummaryCard(weekTotal: Int, monthTotal: Int, monthName: String, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.widthIn(max = DayLabelWidth + DayLabelGap + (Cell + CellGap) * MAX_WEEKS - CellGap).fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = CardFill,
+    ) {
+        Row(
+            Modifier.height(64.dp).padding(start = 18.dp, end = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SummaryValue("This week", weekTotal)
+            Box(Modifier.width(1.dp).height(32.dp).background(ButtonBorder))
+            SummaryValue(monthName, monthTotal)
+            Spacer(Modifier.weight(1f))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Stats", style = Label.copy(fontSize = 14.sp, color = Accent))
+                Icon(ChevronRightIcon, contentDescription = null, tint = Accent)
             }
         }
     }
 }
 
 @Composable
-private fun Swatch(color: Color, sizeDp: Int) {
-    Box(
-        Modifier
-            .size(sizeDp.dp)
-            .clip(RoundedCornerShape(if (sizeDp > 11) 4.dp else 3.dp))
-            .background(color)
-    )
+private fun SummaryValue(label: String, value: Int) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(label, style = Small)
+        Text("$value", style = Label.copy(fontSize = 20.sp, lineHeight = 24.sp, color = TextPrimary))
+    }
 }
 
 /** "I smoked today" until the first tap, then a − / + stepper for today's count. */
@@ -295,21 +296,3 @@ private fun LogControl(count: Int, onAdjust: (Int) -> Unit) {
         }
     }
 }
-
-/** 18dp line icons on a 24 grid, tinted by Icon. */
-private fun lineIcon(name: String, strokeWidth: Float, vararg paths: String): ImageVector =
-    ImageVector.Builder(name, 18.dp, 18.dp, 24f, 24f).apply {
-        paths.forEach {
-            addPath(
-                pathData = addPathNodes(it),
-                stroke = SolidColor(Color.Black),
-                strokeLineWidth = strokeWidth,
-                strokeLineCap = StrokeCap.Round,
-                strokeLineJoin = StrokeJoin.Round,
-            )
-        }
-    }.build()
-
-private val UndoIcon = lineIcon("undo", 2f, "M9 14 4 9l5-5", "M4 9h10.5a5.5 5.5 0 0 1 0 11H11")
-private val MinusIcon = lineIcon("minus", 2.2f, "M5 12h14")
-private val PlusIcon = lineIcon("plus", 2.2f, "M12 5v14", "M5 12h14")
