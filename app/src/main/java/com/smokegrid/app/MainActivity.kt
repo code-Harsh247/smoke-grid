@@ -82,17 +82,31 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(background = Ground, surface = Ground)) {
                 Surface(Modifier.fillMaxSize()) {
-                    var showStats by rememberSaveable { mutableStateOf(false) }
-                    BackHandler(enabled = showStats) { showStats = false }
-                    if (showStats) StatsScreen(onBack = { showStats = false }) else HomeScreen(onOpenStats = { showStats = true })
+                    var screen by rememberSaveable { mutableStateOf(Screen.Home) }
+                    val goHome = { screen = Screen.Home }
+                    BackHandler(enabled = screen != Screen.Home, onBack = goHome)
+                    when (screen) {
+                        Screen.Home -> HomeScreen(onOpenStats = { screen = Screen.Stats }, onOpenSync = { screen = Screen.Sync })
+                        Screen.Stats -> StatsScreen(onBack = goHome)
+                        Screen.Sync -> SyncScreen(onBack = goHome)
+                    }
                 }
             }
         }
     }
+
+    override fun onStart() {
+        super.onStart()
+        // Pick up other phones' changes whenever the app comes to the front.
+        Sync.schedulePeriodic(this)
+        Sync.requestSync(this, delaySeconds = 0)
+    }
 }
 
+private enum class Screen { Home, Stats, Sync }
+
 @Composable
-private fun HomeScreen(onOpenStats: () -> Unit) {
+private fun HomeScreen(onOpenStats: () -> Unit, onOpenSync: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val version by remember { SmokeLog.changes(context) }.collectAsState(initial = 0)
@@ -162,6 +176,18 @@ private fun HomeScreen(onOpenStats: () -> Unit) {
         Spacer(Modifier.height(10.dp))
         Box(Modifier.height(16.dp)) {
             if (count == 1) Text("Tap + for each one", style = Small.copy(fontSize = 12.sp, lineHeight = 16.sp))
+        }
+    }
+    // Drawn last so it sits above the column.
+    if (Sync.isConfigured) {
+        Box(Modifier.fillMaxSize().safeDrawingPadding().padding(top = 8.dp, end = 8.dp), contentAlignment = Alignment.TopEnd) {
+            IconButton(
+                onClick = onOpenSync,
+                modifier = Modifier.size(44.dp),
+                colors = IconButtonDefaults.iconButtonColors(contentColor = TextSecondary),
+            ) {
+                Icon(CloudIcon, contentDescription = "Sync")
+            }
         }
     }
 }

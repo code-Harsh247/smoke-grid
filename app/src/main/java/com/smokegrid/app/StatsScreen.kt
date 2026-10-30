@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -22,9 +21,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -74,20 +70,7 @@ fun StatsScreen(onBack: () -> Unit) {
             .verticalScroll(rememberScrollState())
             .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 40.dp),
     ) {
-        Row(
-            Modifier.offset(x = (-10).dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.size(44.dp),
-                colors = IconButtonDefaults.iconButtonColors(contentColor = TextPrimary),
-            ) {
-                Icon(BackIcon, contentDescription = "Back")
-            }
-            Text("Stats", style = Label.copy(fontSize = 20.sp, color = TextPrimary))
-        }
+        ScreenHeader("Stats", onBack)
 
         Spacer(Modifier.height(20.dp))
         Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {

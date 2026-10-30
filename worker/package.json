@@ -1,0 +1,10 @@
+{
+  "name": "smoke-grid-sync",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "hash-password": "node scripts/hash-password.mjs",
+    "db:init": "npx wrangler d1 execute smoke-grid --remote --file=schema.sql",
+    "deploy": "npx wrangler deploy"
+  }
+}

@@ -10,8 +10,8 @@ import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 /**
- * All data lives on the phone in SharedPreferences, one key per day: "d_2026-10-23" -> count.
- * v1 only uses 0 / 1, but storing a count means per-day cigarette counts (v2) need no migration.
+ * The log lives on the phone in SharedPreferences, one key per day: "d_2026-10-23" -> count.
+ * The app and widget only ever read this; Sync.kt copies changes to and from the server.
  */
 object SmokeLog {
     private const val PREFS = "smoke_log"
@@ -20,6 +20,10 @@ object SmokeLog {
     /** Old key that edits used to move (the bug). Dropped on first run of this version. */
     private const val LEGACY_KEY_START = "start_date"
     private const val DAY_PREFIX = "d_"
+    /** "u_2026-10-23" -> when that day was last changed (ms), for last-write-wins sync. */
+    private const val UPDATED_PREFIX = "u_"
+    /** Days changed on this phone that the sync server hasn't stored yet. */
+    private const val KEY_DIRTY = "dirty_days"
 
     /** A cigarette at 1:30am still counts for the previous day. */
     const val DAY_START_HOUR = 4L
@@ -53,9 +57,14 @@ object SmokeLog {
 
     fun setCount(context: Context, date: LocalDate, count: Int) {
         firstDay(context) // make sure the first day is recorded before any edit
-        val editor = prefs(context).edit()
+        val p = prefs(context)
+        val editor = p.edit()
         if (count <= 0) editor.remove(DAY_PREFIX + date) else editor.putInt(DAY_PREFIX + date, count)
+        // Remember when and that this day changed, so it gets sent to the sync server.
+        editor.putLong(UPDATED_PREFIX + date, System.currentTimeMillis())
+        editor.putStringSet(KEY_DIRTY, dirtySet(p) + date.toString())
         editor.apply()
+        Sync.requestSync(context)
     }
 
     /** Adds [delta] cigarettes to [date]; never goes below 0. */
@@ -76,6 +85,80 @@ object SmokeLog {
             .keys.maxOrNull()
         val from = lastSmoked ?: startDate(context).minusDays(1)
         return ChronoUnit.DAYS.between(from, through).coerceAtLeast(0)
+    }
+
+    // --- Sync support (see Sync.kt). Remote changes are applied without marking days dirty. ---
+
+    private fun dirtySet(p: SharedPreferences): Set<String> = p.getStringSet(KEY_DIRTY, null).orEmpty()
+
+    internal fun firstDayForSync(context: Context): LocalDate = firstDay(context)
+
+    /** Days changed here that still need sending. */
+    internal fun dirtyDays(context: Context): List<SyncDay> {
+        val p = prefs(context)
+        return dirtySet(p).map { date ->
+            SyncDay(date, p.getInt(DAY_PREFIX + date, 0), p.getLong(UPDATED_PREFIX + date, 0))
+        }
+    }
+
+    /** Clears the dirty flag for days the server stored, unless they changed again meanwhile. */
+    internal fun markSent(context: Context, sent: List<SyncDay>) {
+        val p = prefs(context)
+        val still = dirtySet(p).filterNot { date ->
+            sent.any { it.date == date && it.updatedAt == p.getLong(UPDATED_PREFIX + date, 0) }
+        }
+        p.edit().putStringSet(KEY_DIRTY, still.toSet()).commit()
+    }
+
+    /** Applies days from the server that are newer than this phone's copy (last write wins). */
+    internal fun applyRemote(context: Context, days: List<SyncDay>, remoteFirstDay: LocalDate?) {
+        val p = prefs(context)
+        val editor = p.edit()
+        val dirty = dirtySet(p).toMutableSet()
+        var changed = false
+        for (day in days) {
+            if (day.updatedAt <= p.getLong(UPDATED_PREFIX + day.date, 0)) continue
+            if (day.count <= 0) editor.remove(DAY_PREFIX + day.date) else editor.putInt(DAY_PREFIX + day.date, day.count)
+            editor.putLong(UPDATED_PREFIX + day.date, day.updatedAt)
+            dirty -= day.date
+            changed = true
+        }
+        if (remoteFirstDay != null && remoteFirstDay.isBefore(firstDay(context))) {
+            editor.putString(KEY_FIRST_DAY, remoteFirstDay.toString())
+            changed = true
+        }
+        if (changed) editor.putStringSet(KEY_DIRTY, dirty).commit()
+    }
+
+    /**
+     * First sync after signing in: keep the higher count of this phone and the server for every day,
+     * and mark the days where this phone is higher (or the server has nothing) for sending.
+     */
+    internal fun mergeFirstSync(context: Context, remote: List<SyncDay>) {
+        val p = prefs(context)
+        val now = System.currentTimeMillis()
+        val remoteByDate = remote.associateBy { it.date }
+        val editor = p.edit()
+        val dirty = dirtySet(p).toMutableSet()
+        for (day in remote) {
+            val local = p.getInt(DAY_PREFIX + day.date, 0)
+            if (day.count >= local) {
+                if (day.count <= 0) editor.remove(DAY_PREFIX + day.date) else editor.putInt(DAY_PREFIX + day.date, day.count)
+                editor.putLong(UPDATED_PREFIX + day.date, day.updatedAt)
+                dirty -= day.date
+            } else {
+                editor.putLong(UPDATED_PREFIX + day.date, now)
+                dirty += day.date
+            }
+        }
+        for ((date, count) in allCounts(context)) {
+            val key = date.toString()
+            if (count > 0 && key !in remoteByDate) {
+                if (p.getLong(UPDATED_PREFIX + key, 0) == 0L) editor.putLong(UPDATED_PREFIX + key, now)
+                dirty += key
+            }
+        }
+        editor.putStringSet(KEY_DIRTY, dirty).commit()
     }
 
     /** Emits whenever the log changes, so the widget and app redraw immediately. */

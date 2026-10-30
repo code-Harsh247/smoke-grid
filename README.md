@@ -21,10 +21,25 @@ A home-screen widget that shows a GitHub-style grid of your days. Ember-shaded b
 - Today's box has a cream ring. Dimmed boxes are from before you started tracking.
 - The widget follows the phone's light / dark mode.
 
+## Sync between phones (Cloudflare)
+The log is synced through a small Cloudflare Worker with a D1 database (in `worker/`). It is a one-person setup: only your email and password can sign in.
+
+One-time setup, from the `worker` folder:
+1. `npx wrangler login` (opens the browser to sign in to Cloudflare).
+2. `npx wrangler d1 create smoke-grid`, then paste the printed `database_id` into `wrangler.toml`.
+3. `npm run db:init` creates the tables.
+4. `npx wrangler secret put ACCOUNT_EMAIL` and type your email.
+5. `npm run hash-password`, type a password (10+ characters), then `npx wrangler secret put PASSWORD_HASH` and paste the line it printed.
+6. `npm run deploy`, then put the printed `https://smoke-grid-sync.<you>.workers.dev` URL in `gradle.properties` as `syncUrl=` and rebuild the app.
+
+In the app, tap the cloud icon (top right) and sign in. Each phone stays signed in until you sign out. Changes are sent as soon as there's a connection; other phones' changes arrive when you open the app and every few hours. If the same day was changed on two phones, the later change wins.
+
 ## How it's built
 | File | What it does |
 |---|---|
-| `SmokeLog.kt` | Stores a count per day on the phone (SharedPreferences). |
+| `SmokeLog.kt` | Stores a count per day on the phone (SharedPreferences), and which days changed since the last sync. |
+| `Sync.kt` | Signs in to the Worker and syncs changed days in the background (WorkManager). |
+| `worker/` | The Cloudflare Worker + D1 schema the app syncs with. |
 | `HeatmapRenderer.kt` | Draws the grid as a bitmap in the Ember palettes (dark + light). |
 | `SmokeWidget.kt` | The widget (Jetpack Glance): just the grid; tapping opens the app. |
 | `MainActivity.kt` | The app screen: streak, 13-week grid, today's button / stepper. |

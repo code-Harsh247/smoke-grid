@@ -1,0 +1,13 @@
+name = "smoke-grid-sync"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "smoke-grid"
+# Filled in from `npx wrangler d1 create smoke-grid`.
+database_id = "REPLACE_WITH_DATABASE_ID"
+
+# Secrets (set with `npx wrangler secret put <NAME>`, never committed):
+#   ACCOUNT_EMAIL  the email you sign in with
+#   PASSWORD_HASH  output of `npm run hash-password`

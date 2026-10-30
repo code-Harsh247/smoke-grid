@@ -1,10 +1,18 @@
 package com.smokegrid.app
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -70,3 +78,23 @@ internal val MinusIcon = lineIcon("minus", 2.2f, "M5 12h14")
 internal val PlusIcon = lineIcon("plus", 2.2f, "M12 5v14", "M5 12h14")
 internal val ChevronRightIcon = lineIcon("chevron_right", 2f, "m9 6 6 6-6 6")
 internal val BackIcon = lineIcon("back", 2f, "m15 18-6-6 6-6", sizeDp = 22)
+internal val CloudIcon = lineIcon("cloud", 2f, "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z", sizeDp = 22)
+
+/** Back arrow and title, for screens opened from the main screen. */
+@Composable
+internal fun ScreenHeader(title: String, onBack: () -> Unit) {
+    Row(
+        Modifier.offset(x = (-10).dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier.size(44.dp),
+            colors = IconButtonDefaults.iconButtonColors(contentColor = TextPrimary),
+        ) {
+            Icon(BackIcon, contentDescription = "Back")
+        }
+        Text(title, style = Label.copy(fontSize = 20.sp, color = TextPrimary))
+    }
+}

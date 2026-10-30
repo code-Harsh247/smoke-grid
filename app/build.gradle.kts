@@ -14,9 +14,16 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+
+        // The Cloudflare Worker that syncs the log (see /worker). Empty = sync hidden.
+        val syncUrl = (project.findProperty("syncUrl") as String?).orEmpty()
+        buildConfigField("String", "SYNC_URL", "\"$syncUrl\"")
     }
 
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -33,4 +40,5 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.glance:glance-appwidget:1.1.1")
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
 }
